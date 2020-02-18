@@ -3,7 +3,8 @@ import 'package:journal_project/pages/login.dart';
 import 'package:journal_project/pages/calendar.dart';
 import 'package:journal_project/functions/auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:journal_project/functions/auth.dart';
+import 'package:provider/provider.dart';
+import 'package:journal_project/models/email_model.dart';
 
 void main() => runApp(MyApp());
 
@@ -24,16 +25,21 @@ class _MyApp extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'journal',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider<EmailModel>.value(value: EmailModel()),
+      ],
+      child: MaterialApp(
+        title: 'journal',
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
+        ),
+        initialRoute: '/',
+        routes: {
+          '/': (context) => isLogin ? CalendarPage() : LoginPage(),
+          '/login': (context) => LoginPage(),
+        },
       ),
-      initialRoute: '/',
-      routes: {
-        '/': (context) => isLogin ? CalendarPage() : LoginPage(),
-        '/login': (context) => LoginPage(),
-      },
     );
   }
 

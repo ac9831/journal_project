@@ -3,6 +3,10 @@ import 'package:journal_project/widgets/Drawer.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:journal_project/design/styling.dart';
+import 'package:provider/provider.dart';
+import 'package:journal_project/models/email_model.dart';
+import 'package:flare_flutter/flare_actor.dart';
+import 'package:journal_project/pages/editor_page.dart';
 
 final Map<DateTime, List> _holidays = {
   DateTime(2020, 1, 1): ['New Year\'s Day'],
@@ -25,6 +29,7 @@ class _CalendarPage extends State<CalendarPage> with TickerProviderStateMixin {
   AnimationController _animationController;
   Map<DateTime, List> _events;
   List _selectedEvents;
+  final GlobalKey _fabKey = GlobalKey();
 
   @override
   void initState() {
@@ -72,7 +77,9 @@ class _CalendarPage extends State<CalendarPage> with TickerProviderStateMixin {
             Expanded(child: _buildEventList()),
           ]),
           drawer: new JournalDrawer(),
-          bottomNavigationBar: _bottomNavigation,
+          floatingActionButtonLocation:
+              FloatingActionButtonLocation.centerDocked,
+          floatingActionButton: _fab,
         ));
   }
 
@@ -237,56 +244,38 @@ class _CalendarPage extends State<CalendarPage> with TickerProviderStateMixin {
     );
   }
 
-  Widget get _bottomNavigation {
-    final Animation<Offset> slideIn =
-        Tween<Offset>(begin: const Offset(0, 1), end: Offset.zero).animate(
-            CurvedAnimation(
-                parent: ModalRoute.of(context).animation, curve: Curves.ease));
-    final Animation<Offset> slideOut =
-        Tween<Offset>(begin: Offset.zero, end: const Offset(0, 1)).animate(
-            CurvedAnimation(
-                parent: ModalRoute.of(context).secondaryAnimation,
-                curve: Curves.fastOutSlowIn));
+  Widget get _fab {
+    return AnimatedBuilder(
+      animation: ModalRoute.of(context).animation,
+      child: Consumer<EmailModel>(
+        builder: (BuildContext context, EmailModel model, Widget child) {
+          final bool showEditAsAction = model.currentlySelectedEmailId == -1;
 
-    return SlideTransition(
-      position: slideIn,
-      child: SlideTransition(
-        position: slideOut,
-        child: BottomAppBar(
-          color: AppTheme.grey,
-          shape:
-              AutomaticNotchedShape(RoundedRectangleBorder(), CircleBorder()),
-          notchMargin: 8,
-          child: SizedBox(
-            height: 48,
-            child: Row(
-              children: <Widget>[
-                IconButton(
-                  iconSize: 48,
-                  icon: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      const Icon(
-                        Icons.arrow_drop_up,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 4),
-                      Image.asset(
-                        'assets/images/logo.png',
-                        width: 21,
-                        height: 21,
-                      ),
-                    ],
-                  ),
-                  onPressed: () => print('Tap!'),
-                ),
-                Spacer(),
-              ],
+          return FloatingActionButton(
+            key: _fabKey,
+            child: SizedBox(
+              width: 24,
+              height: 24,
+              child: FlareActor(
+                'assets/flare/edit_reply.flr',
+                animation: showEditAsAction ? 'ReplyToEdit' : 'EditToReply',
+              ),
             ),
-          ),
-        ),
+            backgroundColor: AppTheme.orange,
+            onPressed: () => Navigator.of(context).push<void>(
+              EditorPage.route(context, _fabKey),
+            ),
+          );
+        },
       ),
+      builder: (BuildContext context, Widget fab) {
+        final Animation<double> animation = ModalRoute.of(context).animation;
+        return SizedBox(
+          width: 54 * animation.value,
+          height: 54 * animation.value,
+          child: fab,
+        );
+      },
     );
   }
 }

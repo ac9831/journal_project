@@ -15,8 +15,8 @@ dependencies:
   intl: ^0.16.1
   table_calendar: ^2.2.2
   shared_preferences: ^0.5.6+1
-  provider: 3.0.0
-  flare_flutter: 1.5.1
+  provider: ^4.0.4
+  flare_flutter: ^2.0.1
 
 dev_dependencies:
   flutter_test:
