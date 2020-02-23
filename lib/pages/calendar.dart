@@ -30,6 +30,7 @@ class _CalendarPage extends State<CalendarPage> with TickerProviderStateMixin {
   Map<DateTime, List> _events;
   List _selectedEvents;
   final GlobalKey _fabKey = GlobalKey();
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey();
 
   @override
   void initState() {
@@ -65,22 +66,26 @@ class _CalendarPage extends State<CalendarPage> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-        title: appTitle,
-        home: Scaffold(
-          appBar: AppBar(
-            title: Text(appTitle),
-            backgroundColor: PrimaryColor,
-          ),
-          body: Column(mainAxisSize: MainAxisSize.max, children: <Widget>[
-            _buildTableCalendarWithBuilders(),
-            const SizedBox(height: 8.0),
-            Expanded(child: _buildEventList()),
-          ]),
-          drawer: new JournalDrawer(),
-          floatingActionButtonLocation:
-              FloatingActionButtonLocation.centerDocked,
-          floatingActionButton: _fab,
-        ));
+      title: appTitle,
+      home: WillPopScope(
+          onWillPop: _willPopCallback,
+          child: Scaffold(
+            appBar: AppBar(
+              title: Text(appTitle),
+              backgroundColor: PrimaryColor,
+            ),
+            body: Column(mainAxisSize: MainAxisSize.max, children: <Widget>[
+              _buildTableCalendarWithBuilders(),
+              const SizedBox(height: 8.0),
+              Expanded(child: _buildEventList()),
+            ]),
+            drawer: new JournalDrawer(),
+            bottomNavigationBar: _bottomNavigation,
+            floatingActionButtonLocation:
+                FloatingActionButtonLocation.centerDocked,
+            floatingActionButton: _fab,
+          )),
+    );
   }
 
   @override
@@ -100,6 +105,97 @@ class _CalendarPage extends State<CalendarPage> with TickerProviderStateMixin {
   void _onVisibleDaysChanged(
       DateTime first, DateTime last, CalendarFormat format) {
     print('CALLBACK: _onVisibleDaysChanged');
+  }
+
+  Widget get _bottomNavigation {
+    final Animation<Offset> slideIn =
+        Tween<Offset>(begin: const Offset(0, 1), end: Offset.zero).animate(
+            CurvedAnimation(
+                parent: ModalRoute.of(context).animation, curve: Curves.ease));
+    final Animation<Offset> slideOut =
+        Tween<Offset>(begin: Offset.zero, end: const Offset(0, 1)).animate(
+            CurvedAnimation(
+                parent: ModalRoute.of(context).secondaryAnimation,
+                curve: Curves.fastOutSlowIn));
+
+    return SlideTransition(
+      position: slideIn,
+      child: SlideTransition(
+        position: slideOut,
+        child: BottomAppBar(
+          color: AppTheme.grey,
+          shape:
+              AutomaticNotchedShape(RoundedRectangleBorder(), CircleBorder()),
+          notchMargin: 8,
+          child: SizedBox(
+            height: 48,
+            child: Row(
+              children: <Widget>[
+                IconButton(
+                  iconSize: 48,
+                  icon: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      const Icon(
+                        Icons.arrow_drop_up,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 4),
+                      Image.asset(
+                        'assets/images/logo.png',
+                        width: 21,
+                        height: 21,
+                      ),
+                    ],
+                  ),
+                  onPressed: () => print('Tap!'),
+                ),
+                Spacer(),
+                _actionItems,
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget get _actionItems {
+    return Consumer<EmailModel>(
+      builder: (BuildContext context, EmailModel model, Widget child) {
+        final bool showSecond = model.currentlySelectedEmailId >= 0;
+
+        return AnimatedCrossFade(
+          firstCurve: Curves.fastOutSlowIn,
+          secondCurve: Curves.fastOutSlowIn,
+          sizeCurve: Curves.fastOutSlowIn,
+          firstChild: IconButton(
+            icon: const Icon(Icons.search, color: Colors.white),
+            onPressed: () => print('Tap!'),
+          ),
+          secondChild: showSecond
+              ? Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    IconButton(
+                      icon: Image.asset('assets/images/ic_important.png',
+                          width: 28),
+                      onPressed: () => print('Tap!'),
+                    ),
+                    IconButton(
+                      icon: Image.asset('assets/images/ic_more.png', width: 28),
+                      onPressed: () => print('Tap!'),
+                    ),
+                  ],
+                )
+              : const SizedBox(),
+          crossFadeState:
+              showSecond ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+          duration: Duration(milliseconds: 450),
+        );
+      },
+    );
   }
 
   Widget _buildTableCalendarWithBuilders() {
@@ -277,5 +373,14 @@ class _CalendarPage extends State<CalendarPage> with TickerProviderStateMixin {
         );
       },
     );
+  }
+
+  Future<bool> _willPopCallback() async {
+    if (_navigatorKey.currentState.canPop()) {
+      _navigatorKey.currentState.pop();
+      Provider.of<EmailModel>(context).currentlySelectedEmailId = -1;
+      return false;
+    }
+    return true;
   }
 }
