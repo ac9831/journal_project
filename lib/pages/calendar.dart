@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:journal_project/notifier/user_notifier.dart';
 import 'package:journal_project/widgets/Drawer.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:journal_project/design/styling.dart';
 import 'package:provider/provider.dart';
-import 'package:journal_project/models/email_model.dart';
 import 'package:flare_flutter/flare_actor.dart';
 import 'package:journal_project/pages/editor_page.dart';
 
@@ -162,9 +162,9 @@ class _CalendarPage extends State<CalendarPage> with TickerProviderStateMixin {
   }
 
   Widget get _actionItems {
-    return Consumer<EmailModel>(
-      builder: (BuildContext context, EmailModel model, Widget child) {
-        final bool showSecond = model.currentlySelectedEmailId >= 0;
+    return Consumer<UserModel>(
+      builder: (BuildContext context, UserModel model, Widget child) {
+        final bool showSecond = true;
 
         return AnimatedCrossFade(
           firstCurve: Curves.fastOutSlowIn,
@@ -343,9 +343,9 @@ class _CalendarPage extends State<CalendarPage> with TickerProviderStateMixin {
   Widget get _fab {
     return AnimatedBuilder(
       animation: ModalRoute.of(context).animation,
-      child: Consumer<EmailModel>(
-        builder: (BuildContext context, EmailModel model, Widget child) {
-          final bool showEditAsAction = model.currentlySelectedEmailId == -1;
+      child: Consumer<UserModel>(
+        builder: (BuildContext context, UserModel model, Widget child) {
+          final bool showEditAsAction = true;
 
           return FloatingActionButton(
             key: _fabKey,
@@ -378,7 +378,7 @@ class _CalendarPage extends State<CalendarPage> with TickerProviderStateMixin {
   Future<bool> _willPopCallback() async {
     if (_navigatorKey.currentState.canPop()) {
       _navigatorKey.currentState.pop();
-      Provider.of<EmailModel>(context).currentlySelectedEmailId = -1;
+      //Provider.of<EmailModel>(context).currentlySelectedEmailId = -1;
       return false;
     }
     return true;

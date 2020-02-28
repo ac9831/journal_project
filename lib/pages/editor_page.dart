@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:journal_project/models/email.dart';
+import 'package:journal_project/models/journal.dart';
 import 'package:provider/provider.dart';
-import 'package:journal_project/models/email_model.dart';
+import 'package:journal_project/notifier/journal_notifier.dart';
 import 'package:journal_project/design/styling.dart';
 import 'package:journal_project/transition/fab_fill_transition.dart';
 
@@ -35,19 +35,7 @@ class _EditorPageState extends State<EditorPage> {
 
   @override
   Widget build(BuildContext context) {
-    final EmailModel emailModel = Provider.of<EmailModel>(context);
     String fabIcon = 'assets/images/ic_edit.png';
-
-    if (emailModel.currentlySelectedEmailId >= 0) {
-      // We reply to an email, so let's change the icon during the transition
-      fabIcon = 'assets/images/ic_reply.png';
-
-      final Email replyToEmail =
-          emailModel.emails[emailModel.currentlySelectedEmailId];
-      _subject = replyToEmail.subject;
-      _recipient = replyToEmail.sender;
-      _recipientAvatar = replyToEmail.avatar;
-    }
 
     return FabFillTransition(
       source: widget.sourceRect,

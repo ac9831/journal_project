@@ -1,13 +1,11 @@
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:journal_project/notifier/user_notifier.dart';
 
 final FirebaseAuth _auth = FirebaseAuth.instance;
 final GoogleSignIn googleSignIn = GoogleSignIn();
-
-String name;
-String email;
-String imageUrl;
+final UserModel _userModel = new UserModel();
 
 Future<String> signInWithGoogle() async {
   final SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -28,13 +26,13 @@ Future<String> signInWithGoogle() async {
   final FirebaseUser currentUser = await _auth.currentUser();
   assert(user.uid == currentUser.uid);
 
-  name = user.displayName;
-  email = user.email;
-  imageUrl = user.photoUrl;
+  _userModel.registerUser(user.getIdToken().toString(), user.displayName,
+      user.email, user.photoUrl, true);
 
-  prefs.setString('username', name);
-  prefs.setString('useremail', email);
-  prefs.setString('userimage', imageUrl);
+  prefs.setString('user_uid', user.getIdToken().toString());
+  prefs.setString('user_name', user.displayName);
+  prefs.setString('user_email', user.email);
+  prefs.setString('user_image', user.photoUrl);
 
   return 'signInWithGoogle succeeded: $user';
 }
@@ -43,9 +41,10 @@ void signOutGoogle() async {
   final SharedPreferences prefs = await SharedPreferences.getInstance();
   await googleSignIn.signOut();
 
-  prefs.setString('username', null);
-  prefs.setString('useremail', null);
-  prefs.setString('userimage', null);
+  prefs.setString('user_uid', null);
+  prefs.setString('user_name', null);
+  prefs.setString('user_email', null);
+  prefs.setString('user_image', null);
 
   print("User Sign Out");
 }

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:journal_project/pages/login.dart';
 import 'package:journal_project/pages/calendar.dart';
-import 'package:journal_project/functions/auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
-import 'package:journal_project/models/email_model.dart';
+import 'package:journal_project/notifier/journal_notifier.dart';
+import 'package:journal_project/notifier/user_notifier.dart';
 
 void main() => runApp(MyApp());
 
@@ -14,20 +14,21 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyApp extends State<MyApp> {
-  bool isLogin;
+  UserModel _user;
 
   @override
   void initState() {
-    isLogin = false;
     super.initState();
-    checkUserInfo();
   }
 
   @override
   Widget build(BuildContext context) {
+    _user = Provider.of<UserModel>(context);
+    checkUserInfo();
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider<EmailModel>.value(value: EmailModel()),
+        ChangeNotifierProvider<JournalModel>.value(value: JournalModel()),
+        ChangeNotifierProvider<UserModel>.value(value: UserModel()),
       ],
       child: MaterialApp(
         title: 'journal',
@@ -36,8 +37,7 @@ class _MyApp extends State<MyApp> {
         ),
         initialRoute: '/',
         routes: {
-          '/': (context) => isLogin ? CalendarPage() : LoginPage(),
-          '/login': (context) => LoginPage(),
+          '/': (context) => _user.isLogin() ? CalendarPage() : LoginPage(),
         },
       ),
     );
@@ -46,12 +46,11 @@ class _MyApp extends State<MyApp> {
   void checkUserInfo() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     final String userName = prefs.getString('username');
+
     if (userName != null) {
       setState(() {
-        isLogin = true;
-        name = userName;
-        email = prefs.getString('useremail');
-        imageUrl = prefs.getString('userimage');
+        _user.registerUser(prefs.getString('user_uid'), userName,
+            prefs.getString('user_email'), prefs.getString('user_image'), true);
       });
     }
   }

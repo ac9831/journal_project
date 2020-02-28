@@ -52,10 +52,10 @@ class JournalDrawerHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return new UserAccountsDrawerHeader(
-        accountName: new Text(name),
-        accountEmail: new Text(email),
+        accountName: new Text(""),
+        accountEmail: new Text(""),
         currentAccountPicture: new CircleAvatar(
-          backgroundImage: new NetworkImage(imageUrl),
+          backgroundImage: new NetworkImage(""),
           backgroundColor: Colors.white,
         ),
         decoration: new BoxDecoration(
