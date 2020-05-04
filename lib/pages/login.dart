@@ -19,6 +19,7 @@ class _LoginPageState extends State with SingleTickerProviderStateMixin {
   AnimationController _controller;
   @override
   void initState() {
+    super.initState();
     _controller = AnimationController(
       vsync: this,
       duration: Duration(
@@ -29,7 +30,6 @@ class _LoginPageState extends State with SingleTickerProviderStateMixin {
     )..addListener(() {
         setState(() {});
       });
-    super.initState();
   }
 
   @override
@@ -83,7 +83,7 @@ class _LoginPageState extends State with SingleTickerProviderStateMixin {
                 ),
                 DelayedAnimation(
                   child: Text(
-                    "오늘 하루도 보람찬 하루가 되세요.",
+                    "오늘도 보람찬 하루가 되세요.",
                     style: TextStyle(fontSize: 20.0, color: color),
                   ),
                   delay: delayedAmount + 3000,

@@ -20,27 +20,31 @@ class _DelayedAnimationState extends State<DelayedAnimation>
   void initState() {
     super.initState();
 
-    _controller =
-        AnimationController(vsync: this, duration: Duration(milliseconds: 800));
+    _controller = AnimationController(
+        vsync: this, duration: Duration(milliseconds: 1000));
     final curve =
         CurvedAnimation(curve: Curves.decelerate, parent: _controller);
     _animOffset =
         Tween<Offset>(begin: const Offset(0.0, 0.35), end: Offset.zero)
             .animate(curve);
-
-    if (widget.delay == null) {
-      _controller.forward();
-    } else {
-      Timer(Duration(milliseconds: widget.delay), () {
+    if (_controller != null) {
+      if (widget.delay == null) {
         _controller.forward();
-      });
+      } else {
+        Timer(Duration(milliseconds: widget.delay), () {
+          if (_controller != null) {
+            _controller.forward();
+          }
+        });
+      }
     }
   }
 
   @override
   void dispose() {
-    super.dispose();
     _controller.dispose();
+    _controller = null;
+    super.dispose();
   }
 
   @override

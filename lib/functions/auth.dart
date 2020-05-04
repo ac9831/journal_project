@@ -2,10 +2,12 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:journal_project/notifier/user_notifier.dart';
+import 'package:journal_project/repository/user_repository.dart';
 
 final FirebaseAuth _auth = FirebaseAuth.instance;
 final GoogleSignIn googleSignIn = GoogleSignIn();
 final UserModel _userModel = new UserModel();
+final UserRepository _userRepository = UserRepository();
 
 Future<String> signInWithGoogle() async {
   final SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -26,13 +28,17 @@ Future<String> signInWithGoogle() async {
   final FirebaseUser currentUser = await _auth.currentUser();
   assert(user.uid == currentUser.uid);
 
-  _userModel.registerUser(user.getIdToken().toString(), user.displayName,
-      user.email, user.photoUrl, true);
+  _userModel.registerUser(
+      user.uid, user.displayName, user.email, user.photoUrl, true);
 
-  prefs.setString('user_uid', user.getIdToken().toString());
+  prefs.setString('user_uid', user.uid);
   prefs.setString('user_name', user.displayName);
   prefs.setString('user_email', user.email);
   prefs.setString('user_image', user.photoUrl);
+
+  if (_userRepository.isNotExistUser(user.email)) {
+    _userRepository.dataAdd(user.uid, _userModel.getLocalUser().toJson());
+  }
 
   return 'signInWithGoogle succeeded: $user';
 }
@@ -47,4 +53,18 @@ void signOutGoogle() async {
   prefs.setString('user_image', null);
 
   print("User Sign Out");
+}
+
+Future<UserModel> checkUserInfo() async {
+  final SharedPreferences prefs = await SharedPreferences.getInstance();
+  final String userName = prefs.getString('user_name');
+  bool isExistUser = await _userModel.isUser(prefs.getString('user_uid'));
+
+  if (isExistUser) {
+    _userModel.registerUser(prefs.getString('user_uid'), userName,
+        prefs.getString('user_email'), prefs.getString('user_image'), true);
+    return _userModel;
+  }
+
+  return _userModel;
 }

@@ -1,22 +1,25 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:journal_project/notifier/journal_notifier.dart';
 import 'package:journal_project/notifier/user_notifier.dart';
-import 'package:journal_project/widgets/Drawer.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:journal_project/design/styling.dart';
 import 'package:provider/provider.dart';
 import 'package:flare_flutter/flare_actor.dart';
 import 'package:journal_project/pages/editor_page.dart';
+import '../constants/common_constants.dart';
+import '../models/journal.dart';
 
 final Map<DateTime, List> _holidays = {
-  DateTime(2020, 1, 1): ['New Year\'s Day'],
-  DateTime(2020, 1, 6): ['Epiphany'],
-  DateTime(2020, 2, 14): ['Valentine\'s Day'],
-  DateTime(2020, 4, 21): ['Easter Sunday'],
-  DateTime(2020, 4, 22): ['Easter Monday'],
+  //DateTime(2020, 1, 1): ['New Year\'s Day'],
 };
 
 const PrimaryColor = const Color(0xFF151026);
+DateTime currentBackPressTime;
 
 class CalendarPage extends StatefulWidget {
   @override
@@ -24,47 +27,47 @@ class CalendarPage extends StatefulWidget {
 }
 
 class _CalendarPage extends State<CalendarPage> with TickerProviderStateMixin {
-  final appTitle = '업무 일지 관리';
   CalendarController _calendarController;
   AnimationController _animationController;
+  final StreamController<Map<DateTime, List>> _streamController =
+      StreamController<Map<DateTime, List>>();
   Map<DateTime, List> _events;
-  List _selectedEvents;
   final GlobalKey _fabKey = GlobalKey();
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey();
+  JournalModel _journal;
+  UserModel _user;
 
   @override
   void initState() {
     super.initState();
     initializeDateFormatting();
     _calendarController = CalendarController();
-    final _selectedDay = DateTime.now();
-
-    _events = {
-      _selectedDay.subtract(Duration(days: 30)): [
-        'Event A0',
-        'Event B0',
-        'Event C0'
-      ],
-      _selectedDay.subtract(Duration(days: 27)): ['Event A1'],
-      _selectedDay.subtract(Duration(days: 20)): [
-        'Event A2',
-        'Event B2',
-        'Event C2',
-        'Event D2'
-      ],
-    };
-
-    _selectedEvents = _events[_selectedDay] ?? [];
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 400),
     );
-
     _animationController.forward();
+  }
+
+  void jounalInit() async {
+    _journal = Provider.of<JournalModel>(context);
+    _user = Provider.of<UserModel>(context);
+
+    _events = new Map<DateTime, List>();
+
+    if (_user.getLocalUser() != null) {
+      List<Journal> _journals = await _journal.getJounalToJsonByUid(
+          journalDocumentName, _user.getLocalUser().uid);
+      for (Journal j in _journals) {
+        _events.putIfAbsent(j.writeDate, () => [j.title]);
+      }
+      _streamController.sink.add(_events);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    jounalInit();
     return MaterialApp(
       title: appTitle,
       home: WillPopScope(
@@ -74,12 +77,18 @@ class _CalendarPage extends State<CalendarPage> with TickerProviderStateMixin {
               title: Text(appTitle),
               backgroundColor: PrimaryColor,
             ),
-            body: Column(mainAxisSize: MainAxisSize.max, children: <Widget>[
-              _buildTableCalendarWithBuilders(),
-              const SizedBox(height: 8.0),
-              Expanded(child: _buildEventList()),
-            ]),
-            drawer: new JournalDrawer(),
+            body: StreamBuilder<Map<DateTime, List>>(
+              stream: _streamController.stream,
+              builder: (BuildContext context,
+                  AsyncSnapshot<Map<DateTime, List>> snapshot) {
+                return Column(
+                    mainAxisSize: MainAxisSize.max,
+                    children: <Widget>[
+                      _buildTableCalendarWithBuilders(snapshot),
+                      const SizedBox(height: 8.0),
+                    ]);
+              },
+            ),
             bottomNavigationBar: _bottomNavigation,
             floatingActionButtonLocation:
                 FloatingActionButtonLocation.centerDocked,
@@ -92,14 +101,8 @@ class _CalendarPage extends State<CalendarPage> with TickerProviderStateMixin {
   void dispose() {
     _calendarController.dispose();
     _animationController.dispose();
+    _streamController.close();
     super.dispose();
-  }
-
-  void _onDaySelected(DateTime day, List events) {
-    print('CALLBACK: _onDaySelected');
-    setState(() {
-      _selectedEvents = events;
-    });
   }
 
   void _onVisibleDaysChanged(
@@ -141,7 +144,10 @@ class _CalendarPage extends State<CalendarPage> with TickerProviderStateMixin {
                         color: Colors.white,
                         size: 20,
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(
+                        width: 4,
+                        height: 21,
+                      ),
                       Image.asset(
                         'assets/images/logo.png',
                         width: 21,
@@ -198,11 +204,12 @@ class _CalendarPage extends State<CalendarPage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildTableCalendarWithBuilders() {
+  Widget _buildTableCalendarWithBuilders(
+      AsyncSnapshot<Map<DateTime, List>> snapshot) {
     return TableCalendar(
       locale: 'ko_kr',
       calendarController: _calendarController,
-      events: _events,
+      events: snapshot.data,
       holidays: _holidays,
       initialCalendarFormat: CalendarFormat.month,
       formatAnimation: FormatAnimation.slide,
@@ -281,8 +288,8 @@ class _CalendarPage extends State<CalendarPage> with TickerProviderStateMixin {
         },
       ),
       onDaySelected: (date, events) {
-        _onDaySelected(date, events);
         _animationController.forward(from: 0.0);
+        _journal.currentlySelectedJournalWriteDate = date;
       },
       onVisibleDaysChanged: _onVisibleDaysChanged,
     );
@@ -321,32 +328,11 @@ class _CalendarPage extends State<CalendarPage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildEventList() {
-    return ListView(
-      children: _selectedEvents
-          .map((event) => Container(
-                decoration: BoxDecoration(
-                  border: Border.all(width: 0.8),
-                  borderRadius: BorderRadius.circular(12.0),
-                ),
-                margin:
-                    const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-                child: ListTile(
-                  title: Text(event.toString()),
-                  onTap: () => print('$event tapped!'),
-                ),
-              ))
-          .toList(),
-    );
-  }
-
   Widget get _fab {
     return AnimatedBuilder(
       animation: ModalRoute.of(context).animation,
       child: Consumer<UserModel>(
         builder: (BuildContext context, UserModel model, Widget child) {
-          final bool showEditAsAction = true;
-
           return FloatingActionButton(
             key: _fabKey,
             child: SizedBox(
@@ -354,13 +340,15 @@ class _CalendarPage extends State<CalendarPage> with TickerProviderStateMixin {
               height: 24,
               child: FlareActor(
                 'assets/flare/edit_reply.flr',
-                animation: showEditAsAction ? 'ReplyToEdit' : 'EditToReply',
+                animation: 'EditToReply',
               ),
             ),
             backgroundColor: AppTheme.orange,
-            onPressed: () => Navigator.of(context).push<void>(
-              EditorPage.route(context, _fabKey),
-            ),
+            onPressed: () => Navigator.of(context)
+                .push<void>(
+                  EditorPage.route(context, _fabKey),
+                )
+                .then((value) => setState(() {})),
           );
         },
       ),
@@ -376,9 +364,22 @@ class _CalendarPage extends State<CalendarPage> with TickerProviderStateMixin {
   }
 
   Future<bool> _willPopCallback() async {
+    if (_navigatorKey.currentState == null) {
+      DateTime now = DateTime.now();
+      if (currentBackPressTime == null ||
+          now.difference(currentBackPressTime) > Duration(seconds: 2)) {
+        currentBackPressTime = now;
+        Fluttertoast.showToast(msg: exitWarning);
+        return Future.value(false);
+      } else {
+        exit(0);
+      }
+      return Future.value(false);
+    }
+
     if (_navigatorKey.currentState.canPop()) {
       _navigatorKey.currentState.pop();
-      //Provider.of<EmailModel>(context).currentlySelectedEmailId = -1;
+      Provider.of<JournalModel>(context).currentlySelectedJournalId = -1;
       return false;
     }
     return true;

@@ -73,6 +73,7 @@ class JournalDrawerFooter extends StatelessWidget {
         title: new Text(intl.logout()),
         onTap: () {
           signOutGoogle();
+
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(

@@ -22,6 +22,10 @@ dependencies:
   cloud_firestore: ^0.13.4
   firebase_auth: ^0.14.0+5
 
+  #widget
+  flutter_rounded_date_picker: ^1.0.3
+  fluttertoast: ^4.0.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -30,5 +34,5 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/
-    - assets/images/banner.jpg
+    - assets/flare/
+    - assets/images/
