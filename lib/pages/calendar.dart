@@ -36,6 +36,7 @@ class _CalendarPage extends State<CalendarPage> with TickerProviderStateMixin {
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey();
   JournalModel _journal;
   UserModel _user;
+  List _selectedEvents;
 
   @override
   void initState() {
@@ -47,19 +48,22 @@ class _CalendarPage extends State<CalendarPage> with TickerProviderStateMixin {
       duration: const Duration(milliseconds: 400),
     );
     _animationController.forward();
+
+    _events = new Map<DateTime, List>();
+    final _selectedDay = DateTime.now();
+    _selectedEvents = _events[_selectedDay] ?? [];
   }
 
   void jounalInit() async {
     _journal = Provider.of<JournalModel>(context);
     _user = Provider.of<UserModel>(context);
 
-    _events = new Map<DateTime, List>();
-
     if (_user.getLocalUser() != null) {
       List<Journal> _journals = await _journal.getJounalToJsonByUid(
           journalDocumentName, _user.getLocalUser().uid);
       for (Journal j in _journals) {
-        _events.putIfAbsent(j.writeDate, () => [j.title]);
+        _events.putIfAbsent(
+            j.writeDate, () => [j.title + "@#@#\\#@#@" + j.subject]);
       }
       _streamController.sink.add(_events);
     }
@@ -77,17 +81,25 @@ class _CalendarPage extends State<CalendarPage> with TickerProviderStateMixin {
               title: Text(appTitle),
               backgroundColor: PrimaryColor,
             ),
-            body: StreamBuilder<Map<DateTime, List>>(
-              stream: _streamController.stream,
-              builder: (BuildContext context,
-                  AsyncSnapshot<Map<DateTime, List>> snapshot) {
-                return Column(
-                    mainAxisSize: MainAxisSize.max,
-                    children: <Widget>[
-                      _buildTableCalendarWithBuilders(snapshot),
-                      const SizedBox(height: 8.0),
-                    ]);
-              },
+            body: Column(
+              mainAxisSize: MainAxisSize.max,
+              children: <Widget>[
+                Flexible(
+                  child: StreamBuilder<Map<DateTime, List>>(
+                    stream: _streamController.stream,
+                    builder: (BuildContext context,
+                        AsyncSnapshot<Map<DateTime, List>> snapshot) {
+                      return Column(
+                          mainAxisSize: MainAxisSize.max,
+                          children: <Widget>[
+                            _buildTableCalendarWithBuilders(snapshot),
+                            const SizedBox(height: 8.0),
+                            Expanded(child: _buildEventList()),
+                          ]);
+                    },
+                  ),
+                ),
+              ],
             ),
             bottomNavigationBar: _bottomNavigation,
             floatingActionButtonLocation:
@@ -290,6 +302,14 @@ class _CalendarPage extends State<CalendarPage> with TickerProviderStateMixin {
       onDaySelected: (date, events) {
         _animationController.forward(from: 0.0);
         _journal.currentlySelectedJournalWriteDate = date;
+        if (events.length > 0) {
+          _journal.currentlySelectedJournal = true;
+        } else {
+          _journal.currentlySelectedJournal = false;
+        }
+        setState(() {
+          _selectedEvents = events;
+        });
       },
       onVisibleDaysChanged: _onVisibleDaysChanged,
     );
@@ -379,9 +399,29 @@ class _CalendarPage extends State<CalendarPage> with TickerProviderStateMixin {
 
     if (_navigatorKey.currentState.canPop()) {
       _navigatorKey.currentState.pop();
-      Provider.of<JournalModel>(context).currentlySelectedJournalId = -1;
+      Provider.of<JournalModel>(context).currentlySelectedJournal = false;
       return false;
     }
     return true;
+  }
+
+  Widget _buildEventList() {
+    return ListView(
+      children: _selectedEvents
+          .map((event) => Container(
+                decoration: BoxDecoration(
+                  border: Border.all(width: 0.8),
+                  borderRadius: BorderRadius.circular(12.0),
+                ),
+                margin:
+                    const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                child: ListTile(
+                  title: Text(event.toString()?.split("@#@#\\#@#@")[0]),
+                  subtitle: Text(event.toString()?.split("@#@#\\#@#@")[1]),
+                  onTap: () => print('$event tapped!'),
+                ),
+              ))
+          .toList(),
+    );
   }
 }

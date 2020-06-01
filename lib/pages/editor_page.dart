@@ -46,7 +46,7 @@ class _EditorPageState extends State<EditorPage> {
   final titleController = TextEditingController();
   final StreamController<Journal> _streamController =
       StreamController<Journal>();
-  bool isEdit = false;
+  bool isEditButtonEnable = true;
 
   void getJounal() {
     if (_journal.currentlySelectedJournalWriteDate != null) {
@@ -127,7 +127,6 @@ class _EditorPageState extends State<EditorPage> {
                                     .data.documents.first.data["title"]
                                     .toString(),
                               );
-                              isEdit = true;
                             }
                           }
                           return SingleChildScrollView(
@@ -199,20 +198,31 @@ class _EditorPageState extends State<EditorPage> {
               child:
                   Text("업무 일지 작성", style: Theme.of(context).textTheme.title)),
           IconButton(
-            onPressed: () {
-              if (_journalModel.currentlySelectedJournalId < 0) {
-                _journalModel.registerJouranl(
-                    titleController.text,
-                    subjectController.text,
-                    DateTime.now(),
-                    DateTime.parse(dateTime),
-                    DateTime.now(),
-                    _user.getLocalUser().uid);
-                _journal.clearJournal();
-              }
+            onPressed: isEditButtonEnable
+                ? null
+                : () {
+                    if (_journal.currentlySelectedJournal) {
+                      _journalModel.updateJournal(
+                          titleController.text,
+                          subjectController.text,
+                          null,
+                          DateTime.parse(dateTime),
+                          DateTime.now(),
+                          _user.getLocalUser().uid,
+                          _journal.currentlyJournalName);
+                    } else {
+                      _journalModel.registerJouranl(
+                          titleController.text,
+                          subjectController.text,
+                          DateTime.now(),
+                          DateTime.parse(dateTime),
+                          DateTime.now(),
+                          _user.getLocalUser().uid);
+                    }
+                    _journal.clearJournal();
 
-              Navigator.of(context).pop();
-            },
+                    Navigator.of(context).pop();
+                  },
             icon: Image.asset(
               'assets/images/ic_edit.png',
               width: 24,
@@ -245,8 +255,24 @@ class _EditorPageState extends State<EditorPage> {
                 description: "업무 일지 날짜를 선택해주세요.",
               );
               if (newDateTime != null) {
-                setState(() =>
-                    dateTime = DateFormat('yyy-MM-dd').format(newDateTime));
+                setState(() {
+                  dateTime = DateFormat('yyy-MM-dd').format(newDateTime);
+                  isEditButtonEnable = false;
+                  _journal
+                      .getJournalToJsonByWriteDate(journalDocumentName,
+                          _journal.currentlySelectedJournalWriteDate)
+                      .then((value) {
+                    if (value.documents.length > 0) {
+                      _journal.currentlySelectedJournal = true;
+                      _journal.currentlyJournalName =
+                          value.documents.first.documentID;
+                    } else {
+                      _journal.currentlySelectedJournal = false;
+                    }
+
+                    isEditButtonEnable = true;
+                  });
+                });
               }
             },
             icon: Icon(
@@ -290,13 +316,14 @@ class _EditorPageState extends State<EditorPage> {
     return Padding(
       padding: const EdgeInsets.only(top: 8),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: <Widget>[
           Expanded(
             child: TextFormField(
               controller: subjectController,
               minLines: 6,
-              maxLines: 20,
+              maxLines: 100,
               decoration: InputDecoration(
                 border: InputBorder.none,
                 hintText: '내용을 입력해주세요.\n내용을 입력하세요',

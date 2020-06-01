@@ -7,8 +7,9 @@ import '../models/journal.dart';
 class JournalModel with ChangeNotifier {
   List<Journal> _journals = new List<Journal>();
   final JournalRepository _repository = new JournalRepository();
-  int _currentlySelectedJournalId = -1;
-  DateTime _currentlySelectedJournalWriteDate = null;
+  bool _currentlySelectedJournal = false;
+  DateTime _currentlySelectedJournalWriteDate;
+  String _currentlyJournalName;
   Journal _journal = new Journal();
 
   void registerJouranl(String title, String subject, DateTime createDate,
@@ -24,25 +25,48 @@ class JournalModel with ChangeNotifier {
     }
   }
 
-  void updateJournal(String title, String subject, DateTime createDate,
-      DateTime writeDate, DateTime changeTime, String uid) {}
+  void updateJournal(
+      String title,
+      String subject,
+      DateTime createDate,
+      DateTime writeDate,
+      DateTime changeTime,
+      String uid,
+      String documentName) {
+    _journal = Journal.setJournal(
+        title, subject, createDate, writeDate, changeTime, uid);
+
+    try {
+      _repository.dataUpdate(documentName, _journal.toJson());
+      _journal.clear();
+    } catch (e) {
+      print(e);
+    }
+  }
 
   void registerJournalList() {}
 
   void deleteJournalList(BigInt id) {}
 
-  int get currentlySelectedJournalId => _currentlySelectedJournalId;
+  bool get currentlySelectedJournal => _currentlySelectedJournal;
 
   DateTime get currentlySelectedJournalWriteDate =>
       _currentlySelectedJournalWriteDate;
 
-  set currentlySelectedJournalId(int value) {
-    _currentlySelectedJournalId = value;
+  String get currentlyJournalName => _currentlyJournalName;
+
+  set currentlySelectedJournal(bool value) {
+    _currentlySelectedJournal = value;
     notifyListeners();
   }
 
   set currentlySelectedJournalWriteDate(DateTime val) {
     _currentlySelectedJournalWriteDate = val;
+    notifyListeners();
+  }
+
+  set currentlyJournalName(String value) {
+    _currentlyJournalName = value;
     notifyListeners();
   }
 
