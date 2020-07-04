@@ -11,7 +11,7 @@ final UserRepository _userRepository = UserRepository();
 
 Future<String> signInWithGoogle() async {
   final SharedPreferences prefs = await SharedPreferences.getInstance();
-  final GoogleSignInAccount googleSignInAccount = await googleSignIn.signIn();
+  final GoogleSignInAccount googleSignInAccount = await googleLogin();
   final GoogleSignInAuthentication googleSignInAuthentication =
       await googleSignInAccount.authentication;
 
@@ -67,4 +67,13 @@ Future<UserModel> checkUserInfo() async {
   }
 
   return _userModel;
+}
+
+Future<GoogleSignInAccount> googleLogin() async {
+  try {
+    return await googleSignIn.signIn();
+  } catch(err) {
+    print(err);
+    return null;
+  }
 }

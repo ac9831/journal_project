@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>961670048727-sjpfs4lbfjmpj0qqpo196hodv0m010ko.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.961670048727-sjpfs4lbfjmpj0qqpo196hodv0m010ko</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>961670048727-ji2dg4gqr6e9rbot1tdjbfq1475ik7uq.apps.googleusercontent.com</string>
+	<key>API_KEY</key>
+	<string>AIzaSyBw0w9IeE5Lo4oda5s9MT6scAZd_qpy1xI</string>
+	<key>GCM_SENDER_ID</key>
+	<string>961670048727</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.example.journalProject</string>
+	<key>PROJECT_ID</key>
+	<string>journal-project-bab10</string>
+	<key>STORAGE_BUCKET</key>
+	<string>journal-project-bab10.appspot.com</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:961670048727:ios:27eedb7251d7fcdd4bf992</string>
+	<key>DATABASE_URL</key>
+	<string>https://journal-project-bab10.firebaseio.com</string>
+</dict>
+</plist>

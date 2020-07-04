@@ -198,7 +198,7 @@ class _EditorPageState extends State<EditorPage> {
               child:
                   Text("업무 일지 작성", style: Theme.of(context).textTheme.title)),
           IconButton(
-            onPressed: isEditButtonEnable
+            onPressed: !isEditButtonEnable
                 ? null
                 : () {
                     if (_journal.currentlySelectedJournal) {

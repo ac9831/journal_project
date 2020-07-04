@@ -22,6 +22,7 @@ class UserModel with ChangeNotifier {
   void getUser(String documentName, String uid) async {}
 
   Future<bool> isUser(String uid) async {
+    if(uid == null || uid == '') return false;
     return await _repository.isExistUserByUid(uid);
   }
 
